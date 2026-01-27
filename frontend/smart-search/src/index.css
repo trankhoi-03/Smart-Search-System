@@ -1,0 +1,430 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Login.jsx */
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+}
+
+.anchorPane {
+  background: white;
+  padding: 50px;
+  margin-bottom: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 350px;
+}
+
+.login-header {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 40px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+input {
+  width: 95%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.login-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.login-button:hover {
+  background-color: #0056b3;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+/* Register.jsx */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.register-header {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 40px;
+}
+
+.register-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  width: 101%;
+  padding: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.register-button:hover {
+  background-color: #0056b3;
+}
+
+/* Home.jsx */
+
+.home-container {
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  /* Default: Center everything (Google Style) */
+  justify-content: center;
+  align-items: center;
+  color: white;
+  transition: all 0.5s ease-in-out; /* Smooth transition */
+  overflow-y: auto; /* Allow scrolling when results appear */
+}
+
+/* 2. "Searched" State (Slide Up) */
+.home-container.searched {
+  justify-content: flex-start; /* Move content to top */
+  padding-top: 40px; /* Add some space at top */
+  height: auto; /* Allow height to grow for results */
+  min-height: 100vh;
+}
+
+/* 2. Top Right Navigation */
+.top-nav {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  display: flex;
+  gap: 15px; /* Space between buttons */
+}
+
+.welcome-text {
+  color: #e8eaed;
+  font-size: 1.1rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.welcome-text strong {
+  color: #8ab4f8;
+}
+
+.logout-button {
+  justify-content: center;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #f9f9f9;
+  color: black;
+  border: 1px solid #555;
+  width: 101%;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.logout-button:hover {
+  background-color: #e8e4e4;
+  border-color: #777;
+}
+
+/* 3. Search Section Animation */
+.search-section {
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+  transition: all 0.5s ease;
+}
+
+.logo-text {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 30px;
+  letter-spacing: 1px;
+}
+
+/* When searched, shrink the logo slightly */
+.home-container.searched .logo-text {
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+/* 4. Google-style Search Input */
+.search-input-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 14px 25px;
+  font-size: 16px;
+  border-radius: 30px; /* The "Pill" shape */
+  border: 1px solid #5f6368;
+  background-color: #303134;
+  color: white;
+  outline: none;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.search-bar:focus {
+  background-color: #3c4043;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  border-color: transparent;
+}
+
+/* 4. Results Container */
+.results-container {
+  width: 100%;
+  max-width: 1000px; /* Wide container for results */
+  margin-top: 30px;
+  padding: 0 20px;
+  animation: fadeIn 1s ease forwards; /* Fade in results slowly */
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* 5. Source Sections (Google, Amazon, etc.) */
+.source-section {
+  margin-bottom: 40px;
+}
+
+.source-title {
+  font-size: 1.2rem;
+  color: #8ab4f8; /* Google-ish blue */
+  border-bottom: 1px solid #3c4043;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+/* 6. Book Grid */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+/* 7. Book Cards */
+.book-card {
+  background-color: #303134;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.book-card:hover {
+  transform: translateY(-5px); /* Lift effect on hover */
+  background-color: #3c4043;
+}
+
+.book-cover {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.book-info {
+  padding: 10px;
+}
+
+.book-title {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ... if title is too long */
+}
+
+.book-author {
+  font-size: 0.8rem;
+  color: #bdc1c6;
+  margin: 0;
+}
+
+/* BookDetail.jsx */
+/* BookDetail.css */
+.detail-container {
+  min-height: 100vh;
+  color: white;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.back-btn {
+  align-self: flex-start;
+  background-color: #f9f9f9;
+  color: black;
+  border: 1px solid #555;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 20px;
+  margin-bottom: 30px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background-color: #e8e4e4;
+  border-color: #777;
+}
+
+.detail-content {
+  display: flex;
+  gap: 50px;
+  max-width: 1000px;
+  width: 100%;
+  background-color: #252627;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Image Section */
+.detail-image-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.detail-cover {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+/* Info Section */
+.detail-info-section {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.detail-title {
+  font-size: 2.5rem;
+  margin: 0 0 10px 0;
+  color: #fff;
+}
+
+.detail-author {
+  font-size: 1.2rem;
+  color: #8ab4f8; /* Google Blue */
+  margin-bottom: 20px;
+}
+
+.detail-meta {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.meta-tag {
+  background-color: #3c4043;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  color: #bdc1c6;
+}
+
+.detail-description h3 {
+  border-bottom: 1px solid #555;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  color: #e8eaed;
+}
+
+.detail-description p {
+  line-height: 1.6;
+  color: #bdc1c6;
+}
+
+.insert-btn {
+  background-color: #4caf50; /* Green */
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.insert-btn:hover {
+  background-color: #43a047;
+  transform: translateY(-2px);
+}
+
+
+
+
+
+
