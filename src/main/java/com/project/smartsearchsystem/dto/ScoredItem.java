@@ -11,5 +11,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ScoredItem<T extends SearchableItem> {
     private T item;
-    private int score;
+    private double score;
 }

@@ -1,9 +1,13 @@
 package com.project.smartsearchsystem.repository;
 
 import com.project.smartsearchsystem.entity.Book;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.postgresql.util.PGobject;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -35,13 +39,13 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     List<Book> findBooksByTitleAndAuthor(String title, String author);
 
     @Query(value = """
-        SELECT * FROM books 
-        WHERE embedding IS NOT NULL 
-        ORDER BY embedding <=> cast(:queryVector as vector) ASC 
-        LIMIT 10
-        """, nativeQuery = true)
-    List<Book> findSimilarBooks(@Param("queryVector") float[] queryVector);
+    SELECT *, embedding <=> cast(?1 as vector) AS distance
+    FROM books 
+    WHERE embedding IS NOT NULL 
+    ORDER BY distance ASC 
+    LIMIT 30
+    """, nativeQuery = true)
+    List<Object[]> findSemanticMatches(String queryVector);
 
-
-
+    Page<Book> findByEmbeddingIsNull(Pageable pageable);
 }

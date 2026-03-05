@@ -6,27 +6,28 @@ import com.project.smartsearchsystem.entity.Book;
 import java.util.List;
 
 public interface BookService {
-    public List<Book> getAllBooks();
+    List<Book> getAllBooks();
 
-    public List<Book> fullTextSearch(String userInput);
+    List<Book> fullTextSearch(String userInput);
 
-    public List<Book> searchLocal(String query);
+    List<Book> searchLocalKeyword(String query);
 
-    public ExternalSearchResults searchExternal(String query);
+    List<Book> searchLocalSemantic(String query, float[] queryVector);
 
-    public void generateEmbeddingsForAllBooks();
+    ExternalSearchResults searchGoogleAndOpenLib(String query);
 
-    public Book insertBook(ExternalBookSource source);
+    BookSearchResponse searchFastSources(String query);
 
-    public int scoreBooks(String userInput, String title);
+    List<AmazonBookDto> searchAmazon(String query);
 
-    public void logSearch(String userInput, String userToken);
+    List<AmazonBookDto> searchAmazonOnly(String query);
 
-    public List<String> getMostSearchedBooks(int limit);
+    void generateEmbeddingsForAllBooks();
 
-    public Book convertToBook(ExternalBookSource source);
+    Book insertBook(ExternalBookSource source);
 
-    public String normalize(String userInput);
+    ChatResponseDto getAIRecommendation(String userMessage, Integer userId);
 
-    public <T extends SearchableItem> List<T> sortAndFilter(List<T> items, String normalizedQuery);
+    public List<String> getMostSearchedBooks(Integer userId, Integer limit);
+
 }

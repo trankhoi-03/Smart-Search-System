@@ -1,5 +1,7 @@
 package com.project.smartsearchsystem.security;
 
+import com.project.smartsearchsystem.entity.User;
+import com.project.smartsearchsystem.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,11 +17,16 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
+    private final UserRepository userRepository;
     @Value("${jwt.secret}")
     private String jwtSecret;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    public JwtTokenProvider(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     // Generate JWT token
     public String generateToken(Authentication authentication) {
@@ -71,5 +78,23 @@ public class JwtTokenProvider {
             System.out.println("JWT claims string is empty");
         }
         return false;
+    }
+
+    public Integer getIdFromToken(String token) {
+        try {
+            String jwt = token;
+            if (token != null && token.startsWith("Bearer ")) {
+                jwt = token.substring(7);
+            }
+
+            String username = getUsernameFromToken(jwt);
+
+            return userRepository.findByUsername(username)
+                    .map(User::getId)
+                    .orElse(null);
+        } catch (Exception e) {
+            System.err.println("Failed to extract user ID from token: " + e.getMessage());
+            return null;
+        }
     }
 }

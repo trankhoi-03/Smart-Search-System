@@ -6,5 +6,4 @@ import java.util.List;
 
 public record ExternalSearchResults(
         List<GoogleBookDto> google,
-        List<OpenLibraryBookDto> openLibrary,
-        List<AmazonBookDto> amazon) { }
+        List<OpenLibraryBookDto> openLibrary) { }

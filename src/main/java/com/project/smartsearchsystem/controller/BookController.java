@@ -2,29 +2,28 @@ package com.project.smartsearchsystem.controller;
 
 import com.project.smartsearchsystem.dto.*;
 import com.project.smartsearchsystem.entity.Book;
+import com.project.smartsearchsystem.security.JwtTokenProvider;
 import com.project.smartsearchsystem.service.BookService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/books")
 @CrossOrigin(origins = "*")
 public class BookController {
 
-
+    private final JwtTokenProvider jwtTokenProvider;
     private final BookService localBookService;
 
-    public BookController(BookService localBookService) {
+    public BookController(JwtTokenProvider jwtTokenProvider, BookService localBookService) {
+        this.jwtTokenProvider = jwtTokenProvider;
         this.localBookService = localBookService;
     }
-
 
     @GetMapping
     public List<Book> getAllBooks() {
@@ -33,42 +32,36 @@ public class BookController {
 
     @GetMapping("/search")
     public BookSearchResponse search(@RequestParam String query, @RequestHeader("Authorization") String token) {
+        return localBookService.searchFastSources(query);
+    }
 
-        // 1. 🚀 KICK OFF EXTERNAL SEARCH IMMEDIATELY (Async)
-        // We start this now so, it runs in the background while we check the local DB.
-        CompletableFuture<ExternalSearchResults> externalFuture = CompletableFuture.supplyAsync(() ->
-                localBookService.searchExternal(query)
-        );
+    @GetMapping("/search/amazon")
+    public ResponseEntity<List<AmazonBookDto>> amazonSearch(@RequestParam String query, @RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(localBookService.searchAmazonOnly(query));
+    }
 
-        // 2. 🏠 SEARCH LOCAL DATABASE
-        List<Book> local = localBookService.searchLocal(query);
-
-        // 3. 🔍 CHECK FOR EXACT MATCH
-        List<Book> exactMatches = local.stream()
-                .filter(b -> b.getTitle() != null && b.getTitle().equalsIgnoreCase(query))
-                .toList();
-
-        if (!exactMatches.isEmpty()) {
-            return new BookSearchResponse(exactMatches);
+    @PostMapping("chat/recommend")
+    public ResponseEntity<ChatResponseDto> aiRecommend(
+            @RequestBody Map<String, String> request,
+            @RequestHeader("Authorization") String token) {
+        Integer userId = jwtTokenProvider.getIdFromToken(token);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // 4. ⏳ JOIN EXTERNAL RESULTS
-        // If we reach here, we need the external data.
-        // Since we started it at Step 1, it might already be done!
-        ExternalSearchResults externalResults;
-        try {
-            externalResults = externalFuture.join(); // Wait for it to finish
-        } catch (Exception e) {
-            // Fallback if external search crashes completely
-            externalResults = new ExternalSearchResults(List.of(), List.of(), List.of());
+        String message = request.get("message");
+        ChatResponseDto response = localBookService.getAIRecommendation(message, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/most-search")
+    public ResponseEntity<List<String>> getMostSearchBooks(@RequestHeader("Authorization") String token) {
+        Integer userId = jwtTokenProvider.getIdFromToken(token);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        // 5. COMBINE AND RETURN
-        List<GoogleBookDto> googleDto = externalResults.google().stream().toList();
-        List<OpenLibraryBookDto> openLibraryDto = externalResults.openLibrary().stream().toList();
-        List<AmazonBookDto> amazonDto = externalResults.amazon().stream().toList();
-
-        return new BookSearchResponse(local, googleDto, openLibraryDto, amazonDto);
+        List<String> mostSearched = localBookService.getMostSearchedBooks(userId, 5);
+        return ResponseEntity.ok(mostSearched);
     }
 
 

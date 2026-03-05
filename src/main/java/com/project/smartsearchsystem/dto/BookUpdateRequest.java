@@ -12,4 +12,5 @@ public class BookUpdateRequest implements ExternalBookSource {
     private String isbn;
     private String publicationYear;
     private String imageUrl;
+    private String source;
 }

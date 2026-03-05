@@ -9,15 +9,25 @@ import java.util.List;
 @Getter
 @Setter
 public class BookSearchResponse {
-    private final boolean single;
-    private final Object singleResult;
 
-    private List<Book> localResults;
-    private List<GoogleBookDto> googleBookResults;
-    private List<OpenLibraryBookDto> openLibraryBookResults;
-    private List<AmazonBookDto> amazonBookResults;
+    private boolean single;
+    private Object singleResult;
 
+    // Local results (both keyword and semantic)
+    private List<Book> localKeywordResults;
+    private List<Book> localSemanticResults;
 
+    // External - Keyword search
+    private List<GoogleBookDto> googleKeywordResults;
+    private List<OpenLibraryBookDto> openLibraryKeywordResults;
+    private List<AmazonBookDto> amazonKeywordResults;
+
+    // External - Semantic re-ranked
+    private List<GoogleBookDto> googleSemanticResults;
+    private List<OpenLibraryBookDto> openLibrarySemanticResults;
+    private List<AmazonBookDto> amazonSemanticResults;
+
+    // Existing constructors (keep them untouched!)
     public BookSearchResponse(List<Book> localHits) {
         this.single = true;
         this.singleResult = localHits;
@@ -28,9 +38,27 @@ public class BookSearchResponse {
                               List<OpenLibraryBookDto> openLibraryBookResults,
                               List<AmazonBookDto> amazonBookResults) {
         this.single = false;
-        this.singleResult = localResults;
-        this.googleBookResults = googleBookResults;
-        this.openLibraryBookResults = openLibraryBookResults;
-        this.amazonBookResults = amazonBookResults;
+        this.localKeywordResults = localResults;  // assuming this was keyword-only before
+        this.googleKeywordResults = googleBookResults;
+        this.openLibraryKeywordResults = openLibraryBookResults;
+        this.amazonKeywordResults = amazonBookResults;
+    }
+
+    // NEW constructor - full hybrid
+    public BookSearchResponse(
+            List<Book> localKeywordResults,
+            List<Book> localSemanticResults,
+            List<GoogleBookDto> googleKeywordResults,
+            List<OpenLibraryBookDto> openLibraryKeywordResults,
+            List<GoogleBookDto> googleSemanticResults,
+            List<OpenLibraryBookDto> openLibrarySemanticResults) {
+
+        this.single = false;
+        this.localKeywordResults = localKeywordResults;
+        this.localSemanticResults = localSemanticResults;
+        this.googleKeywordResults = googleKeywordResults;
+        this.openLibraryKeywordResults = openLibraryKeywordResults;
+        this.googleSemanticResults = googleSemanticResults;
+        this.openLibrarySemanticResults = openLibrarySemanticResults;
     }
 }

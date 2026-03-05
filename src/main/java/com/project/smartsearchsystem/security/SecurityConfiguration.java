@@ -96,7 +96,7 @@ public class SecurityConfiguration {
         // Allow all standard methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        // Allow the headers you are sending (Authorization is crucial!)
+        // Allow the headers you are sending (Authorization is crucial!)netstat
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
 
         // Register this config for all paths in your app

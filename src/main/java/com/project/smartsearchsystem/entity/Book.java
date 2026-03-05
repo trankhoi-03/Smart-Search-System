@@ -1,15 +1,13 @@
 package com.project.smartsearchsystem.entity;
 
 import com.project.smartsearchsystem.dto.SearchableItem;
-import com.project.smartsearchsystem.utils.VectorConverter;
+import com.project.smartsearchsystem.utils.VectorType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.type.SqlTypes;
-
-import java.util.List;
 
 @Entity
 @Table(name = "books")
@@ -21,30 +19,32 @@ public class Book implements SearchableItem {
     private Integer id;
 
     @Getter
-    @Column(name = "title", nullable = false)
+    @Column(name = "title", columnDefinition = "text", nullable = false)
     private String title;
 
     @Getter
-    @Column(name = "author", nullable = false)
+    @Column(name = "author", columnDefinition = "text", nullable = false)
     private String author;
 
-    @Column(name = "description", columnDefinition = "text", nullable = false, length = 2500)
+    @Column(name = "description", columnDefinition = "text", nullable = false)
     private String description;
 
-    @Column(name = "isbn", nullable = false, length = 20)
+    @Column(name = "isbn", length = 20)
     private String isbn;
 
-    @Column(name = "publish_year", nullable = false)
+    @Column(name = "publish_year")
     private String publicationYear;
 
-    @Column(name = "image_url", nullable = false)
+    @Column(name = "image_url", columnDefinition = "text")
     private String image;
 
     // The Vector Embedding
     // Store the "meaning" of text_description as numbers
-    @Column(name = "embedding", columnDefinition = "vector")
-    @Convert(converter = VectorConverter.class)
+    @Type(VectorType.class)
+    @Column(name = "embedding", columnDefinition = "vector(384)")
     private float[] embedding;
+
+    private transient String source;
 
 
     public Book() {

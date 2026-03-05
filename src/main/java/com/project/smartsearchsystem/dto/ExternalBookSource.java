@@ -7,4 +7,6 @@ public interface ExternalBookSource {
     String getIsbn();
     String getPublicationYear();
     String getImageUrl();
+    String getSource();
+    void setSource(String sourceName);
 }

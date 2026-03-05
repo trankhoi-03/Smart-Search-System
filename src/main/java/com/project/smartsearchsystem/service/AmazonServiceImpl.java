@@ -1,13 +1,9 @@
 package com.project.smartsearchsystem.service;
 
 import com.project.smartsearchsystem.dto.AmazonBookDto;
-import com.project.smartsearchsystem.utils.InfoUtils;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -25,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @Transactional
@@ -158,76 +153,6 @@ public class AmazonServiceImpl implements AmazonService {
     public void cleanup() {
         if (driver != null) {
             driver.quit();
-        }
-    }
-
-    @Override
-    public String findCoverUrlById(String id) {
-        try {
-            // use Jsoup (or your Selenium code) to fetch the page
-            Document doc = Jsoup.connect(AMAZON_DP_URL + id)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                    .timeout(10_000)
-                    .get();
-
-            // try the “landing image” selector first
-            Element img = doc.selectFirst("#imgBlkFront, .imgTagWrapper img");
-            if (img != null) {
-                String src = img.attr("src");
-                if (!src.isEmpty()) return src;
-            }
-        } catch (Exception e) {
-            // fall through
-        }
-        return null;
-    }
-
-    @Override
-    public AmazonBookDto fetchBookDetails(String asin) {
-        // 1. We use Jsoup here because it's faster than opening a full browser for just one page
-        String url = "https://www.amazon.com/dp/" + asin;
-
-        try {
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...")
-                    .timeout(10000)
-                    .get();
-
-            // A. GET DESCRIPTION (Missing from search page)
-            String description = "No description available.";
-            Element descEl = doc.selectFirst("#bookDescription_feature_div .a-expander-content");
-            if (descEl != null) {
-                description = descEl.text(); // Get clean text
-            }
-
-            // B. GET PUBLICATION YEAR (Missing from search page)
-            String year = null;
-            Element detailsDiv = doc.selectFirst("#detailBullets_feature_div");
-            if (detailsDiv != null) {
-                // Look for "Publisher" or "Publication date" line
-                for (Element li : detailsDiv.select("li")) {
-                    String text = li.text();
-                    if (text.contains("Publisher") || text.contains("Publication date")) {
-                        year = InfoUtils.extractYear(text); // Use your InfoUtils here!
-                        if (year != null) break;
-                    }
-                }
-            }
-
-            // C. GET TITLE & AUTHOR (Re-confirming details)
-            String title = Objects.requireNonNull(doc.selectFirst("#productTitle")).text();
-            String author = "Unknown";
-            Element authorEl = doc.selectFirst("#bylineInfo .author a");
-            if (authorEl != null) author = authorEl.text();
-
-            // D. GET HIGH-RES IMAGE
-            String imageUrl = Objects.requireNonNull(doc.selectFirst("#landingImage")).attr("src");
-
-            // Return the FULL DTO
-            return new AmazonBookDto(asin, title, author, description, asin, year, imageUrl);
-
-        } catch (Exception e) {
-            return null;
         }
     }
 

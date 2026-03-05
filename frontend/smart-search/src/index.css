@@ -129,7 +129,7 @@ a:hover {
 /* Home.jsx */
 
 .home-container {
-  height: 80vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   /* Default: Center everything (Google Style) */
@@ -137,15 +137,15 @@ a:hover {
   align-items: center;
   color: white;
   transition: all 0.5s ease-in-out; /* Smooth transition */
-  overflow-y: auto; /* Allow scrolling when results appear */
+  /*overflow-y: auto; !* Allow scrolling when results appear *!*/
 }
 
 /* 2. "Searched" State (Slide Up) */
 .home-container.searched {
   justify-content: flex-start; /* Move content to top */
   padding-top: 40px; /* Add some space at top */
-  height: auto; /* Allow height to grow for results */
-  min-height: 100vh;
+  /*height: auto; !* Allow height to grow for results *!*/
+  /*min-height: 100vh;*/
 }
 
 /* 2. Top Right Navigation */
@@ -211,13 +211,16 @@ a:hover {
 
 /* 4. Google-style Search Input */
 .search-input-wrapper {
+  position: relative;
   width: 100%;
-  display: flex;
-  justify-content: center;
+  /*display: flex;*/
+  /*justify-content: center;*/
+  margin: 0 auto;
 }
 
 .search-bar {
   width: 100%;
+  box-sizing: border-box;
   padding: 14px 25px;
   font-size: 16px;
   border-radius: 30px; /* The "Pill" shape */
@@ -232,6 +235,24 @@ a:hover {
   background-color: #3c4043;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
   border-color: transparent;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  margin-top: 4px;
+  background-color: #303134;
+  color: white;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  list-style: none;
+  padding: 0;
+  z-index: 50;
+  overflow: hidden
 }
 
 /* 4. Results Container */
@@ -306,8 +327,47 @@ a:hover {
   margin: 0;
 }
 
+/* --- Amazon Recommendations Section --- */
+
+.amazon-title {
+  font-size: 1.25rem;            /* text-xl */
+  line-height: 1.75rem;
+  font-weight: 700;              /* font-bold */
+  color: #60a5fa;                /* text-blue-400 */
+  margin-bottom: 1rem;           /* mb-4 */
+  margin-left: 1rem;             /* ml-4 */
+}
+
+.amazon-loading-container {
+  display: flex;                 /* flex */
+  align-items: center;           /* items-center */
+  margin-left: 1rem;             /* ml-4 */
+  gap: 0.5rem;                   /* space-x-2 */
+  color: #9ca3af;                /* text-gray-400 */
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; /* animate-pulse */
+}
+
+.amazon-loading-spinner {
+  width: 1rem;                   /* w-4 */
+  height: 1rem;                  /* h-4 */
+  background-color: #eab308;     /* bg-yellow-500 */
+  border-radius: 9999px;         /* rounded-full */
+}
+
+.amazon-empty-message {
+  margin-left: 1rem;             /* ml-4 */
+  color: #6b7280;                /* text-gray-500 */
+  font-size: 0.875rem;           /* text-sm */
+  line-height: 1.25rem;
+}
+
+/* Make sure your pulse keyframes are defined if you haven't added them yet */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
 /* BookDetail.jsx */
-/* BookDetail.css */
 .detail-container {
   min-height: 100vh;
   color: white;
@@ -423,8 +483,146 @@ a:hover {
   transform: translateY(-2px);
 }
 
+/* --- Related Books Section --- */
+
+.related-books-section {
+  margin-top: 4rem;              /* mt-16 */
+  padding-top: 2rem;             /* pt-8 */
+  border-top: 1px solid #374151; /* border-t border-gray-700 */
+}
+
+.related-books-title {
+  font-size: 1.5rem;             /* text-2xl */
+  line-height: 2rem;
+  font-weight: 700;              /* font-bold */
+  color: #ffffff;                /* text-white */
+  margin-bottom: 1.5rem;         /* mb-6 */
+}
+
+.related-books-loading {
+  display: flex;                 /* flex */
+  gap: 1rem;                     /* space-x-4 replacement */
+  overflow: hidden;              /* overflow-hidden */
+}
+
+.related-books-structure {
+  min-width: 150px;              /* min-w-[150px] */
+  height: 15rem;                 /* h-60 */
+  background-color: #1f2937;     /* bg-gray-800 */
+  border-radius: 0.25rem;        /* rounded */
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; /* animate-pulse */
+}
+
+.related-books-empty {
+  color: #6b7280;                /* text-gray-500 */
+}
+
+/* Keyframes for the skeleton loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
 
 
+/* AIChat.jsx */
+.chat-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #303134;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 1000;
+}
 
+.chat-window {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 380px;
+  height: 520px;
+  background: #303134;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1001;
+}
 
+.chat-header-container {
+  padding: 16px;
+  background: #111827;
+  display: flex;
+  justify-content: space-between;
+}
 
+.chat-header {
+  margin: 0;
+  color: white;
+}
+
+.closed-chat-button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 20px;
+}
+
+.chat-message-container {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-message {
+  max-width: 85%;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 18px;
+}
+
+.chat-display {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-input-container {
+  padding: 12px;
+  background: #111827;
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 12px;
+  margin: 12px;
+  border-radius: 9999px;
+  border: none;
+  background: #374151;
+  color: white;
+}
+
+.chat-send-button {
+  padding: 0 20px;
+  border-radius: 9999px;
+  background: #6096e1;
+  color: white;
+  border: none;
+}
