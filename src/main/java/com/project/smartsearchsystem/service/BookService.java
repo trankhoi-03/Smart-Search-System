@@ -26,8 +26,11 @@ public interface BookService {
 
     Book insertBook(ExternalBookSource source);
 
+    void saveExternalBookToDatabase(List<ExternalBookSource> sources);
+
     ChatResponseDto getAIRecommendation(String userMessage, Integer userId);
 
     public List<String> getMostSearchedBooks(Integer userId, Integer limit);
 
+    String generateBookSummary(String title, String author, String imageUrl);
 }

@@ -23,9 +23,17 @@ public class SearchHistory {
     private String query;
     private LocalDateTime searchTime;
 
+    private Boolean foundLocally;
+
     public SearchHistory(Integer userId, String query) {
         this.userId = userId;
         this.query = query;
         this.searchTime = LocalDateTime.now();
+    }
+
+    public SearchHistory(Integer userId, String query, Boolean foundLocally) {
+        this.userId = userId;
+        this.query = query;
+        this.foundLocally = foundLocally;
     }
 }

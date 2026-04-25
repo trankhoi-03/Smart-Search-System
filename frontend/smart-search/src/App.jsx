@@ -7,6 +7,7 @@ import Home from "./components/Home.jsx";
 import useToken from './useToken.js'
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import BookDetail from "./components/BookDetail.jsx";
+import AdminDashboard from "./components/AdminDashboard.jsx";
 
 function App() {
     const { token, setToken, removeToken } = useToken();
@@ -33,7 +34,16 @@ function App() {
                         path="/book/details"
                         element={
                             <ProtectedRoute token={token}>
-                                <BookDetail />
+                                <BookDetail token={token} />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/dashboard"
+                        element={
+                            <ProtectedRoute token={token}>
+                                {/* 🚀 Pass the token as a prop! */}
+                                <AdminDashboard token={token} />
                             </ProtectedRoute>
                         }
                     />

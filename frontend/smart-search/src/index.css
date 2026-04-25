@@ -1,3 +1,19 @@
+/* 🌐 1. RESET DEFAULT VITE CONSTRAINTS */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+#root {
+  margin: 0 !important;
+  padding: 0 !important; /* 🚀 This kills the gray border! */
+  max-width: none !important;
+  width: 100%;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -13,13 +29,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+/*body {*/
+/*  margin: 0;*/
+/*  display: flex;*/
+/*  place-items: center;*/
+/*  min-width: 320px;*/
+/*  min-height: 100vh;*/
+/*}*/
 
 /* Login.jsx */
 
@@ -128,39 +144,56 @@ a:hover {
 
 /* Home.jsx */
 
+/* --- 1. Main Layout & Background --- */
 .home-container {
+  width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  /* Default: Center everything (Google Style) */
   justify-content: center;
   align-items: center;
   color: white;
-  transition: all 0.5s ease-in-out; /* Smooth transition */
-  /*overflow-y: auto; !* Allow scrolling when results appear *!*/
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* 🖼️ CORRECTED PATH: Look at the root (public folder) */
+  background-image:
+          linear-gradient(rgba(53, 51, 51, 0.7), rgba(48, 45, 45, 0.95)),
+          url('./assets/background.jpg'); /* Added leading slash here */
+
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
-/* 2. "Searched" State (Slide Up) */
 .home-container.searched {
-  justify-content: flex-start; /* Move content to top */
-  padding-top: 40px; /* Add some space at top */
-  /*height: auto; !* Allow height to grow for results *!*/
-  /*min-height: 100vh;*/
+  justify-content: flex-start;
+  padding-top: 60px;
 }
 
-/* 2. Top Right Navigation */
+/* --- 2. Top Navigation --- */
 .top-nav {
   position: absolute;
-  top: 20px;
+  top: 25px;
   right: 40px;
+  z-index: 100;
+}
+
+.welcome-pill {
   display: flex;
-  gap: 15px; /* Space between buttons */
+  align-items: center;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px 8px 20px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .welcome-text {
   color: #e8eaed;
-  font-size: 1.1rem;
-  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
 }
 
 .welcome-text strong {
@@ -168,163 +201,415 @@ a:hover {
 }
 
 .logout-button {
-  justify-content: center;
-  align-items: center;
-  padding: 8px 16px;
-  background-color: #f9f9f9;
-  color: black;
-  border: 1px solid #555;
-  width: 101%;
-  font-size: 16px;
-  font-family: inherit;
-  font-weight: 500;
+  padding: 8px 20px;
+  background-color: #e8eaed;
+  color: #202124;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
   border-radius: 20px;
   cursor: pointer;
-  transition: 0.3s ease-in-out;
+  transition: all 0.2s ease;
 }
 
 .logout-button:hover {
-  background-color: #e8e4e4;
-  border-color: #777;
+  background-color: #ffffff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
 }
 
-/* 3. Search Section Animation */
+/* --- 3. Hero & Search Section --- */
 .search-section {
   text-align: center;
   width: 100%;
-  max-width: 600px;
+  max-width: 650px;
   transition: all 0.5s ease;
+  z-index: 10;
 }
 
 .logo-text {
-  font-size: 3rem;
-  font-weight: bold;
-  margin-bottom: 30px;
-  letter-spacing: 1px;
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #8ab4f8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -1px;
 }
 
-/* When searched, shrink the logo slightly */
+.hero-subtitle {
+  color: #9ca3af;
+  font-size: 1.1rem;
+  margin-bottom: 40px;
+}
+
 .home-container.searched .logo-text {
   font-size: 2rem;
-  margin-bottom: 15px;
+  margin-bottom: 25px;
 }
 
-/* 4. Google-style Search Input */
+
+.search-tabs-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 25px; /* Adds space between the search bar and the tabs */
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: #9ca3af;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.tab-btn.active {
+  background: rgba(138, 180, 248, 0.15); /* Soft Google Blue */
+  border-color: rgba(138, 180, 248, 0.5);
+  color: #8ab4f8;
+  box-shadow: 0 4px 12px rgba(138, 180, 248, 0.2);
+}
+
+/* --- 4. Search Input (Glassmorphism) --- */
 .search-input-wrapper {
   position: relative;
   width: 100%;
-  /*display: flex;*/
-  /*justify-content: center;*/
-  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #9ca3af;
+  pointer-events: none; /* Let clicks pass through to input */
 }
 
 .search-bar {
   width: 100%;
   box-sizing: border-box;
-  padding: 14px 25px;
-  font-size: 16px;
-  border-radius: 30px; /* The "Pill" shape */
-  border: 1px solid #5f6368;
-  background-color: #303134;
+  padding: 18px 25px 18px 55px; /* Extra left padding for the icon */
+  font-size: 1.1rem;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(32, 33, 36, 0.8);
   color: white;
   outline: none;
-  transition: background-color 0.2s, box-shadow 0.2s;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .search-bar:focus {
-  background-color: #3c4043;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
-  border-color: transparent;
+  background: rgba(48, 49, 52, 0.95);
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 4px rgba(138, 180, 248, 0.15), 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
+.search-bar::placeholder {
+  color: #6b7280;
+}
+
+
+/* Voice Search Mic Button */
+.mic-button {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+
+  /* 1. 🚀 This perfectly centers the SVG INSIDE the hover circle */
+  padding: 0; /* REMOVE padding-bottom: 15px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 45px;
+
+  /* 2. 🚀 This vertically centers the WHOLE button inside the search bar */
+  top: 50%;
+  transform: translateY(-50%);
+
+  /* 3. If the button STILL looks too low, use margin-top to nudge it up! */
+  margin-top: -6px; /* Tweak this number (e.g., -5px or 2px) until it is perfectly aligned with your text */
+}
+
+.mic-button:hover {
+  color: #8ab4f8; /* Highlight on hover */
+  background: rgba(138, 180, 248, 0.1);
+}
+
+/* 🔴 The Pulse Animation when Active */
+.mic-button.listening {
+  color: #e74c3c;
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(231, 76, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+  }
+}
+
+/* Visual Search */
+
+.camera-button {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+
+  /* 1. 🚀 Center SVG in circle */
+  padding: 0; /* REMOVE padding-bottom: 15px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 85px;
+
+  /* 2. 🚀 Center button in search bar */
+  top: 50%;
+  transform: translateY(-50%);
+
+  /* 3. Nudge to match the mic button */
+  margin-top: -6px;
+}
+
+.camera-button:hover {
+  color: #8ab4f8;
+  background: rgba(138, 180, 248, 0.1);
+}
+
+/* Animation while AI is looking at the image */
+.camera-button.analyzing {
+  color: #f39c12;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+
+/* --- 5. Search Dropdown --- */
 .search-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  box-sizing: border-box;
-  margin-top: 4px;
-  background-color: #303134;
-  color: white;
-  border: 1px solid #374151;
+  margin-top: 8px;
+  background: rgba(32, 33, 36, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   list-style: none;
-  padding: 0;
+  padding: 8px 0;
   z-index: 50;
-  overflow: hidden
+  overflow: hidden;
 }
 
-/* 4. Results Container */
+.dropdown-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #e8eaed;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.history-icon {
+  color: #9ca3af;
+}
+
+.dropdown-empty {
+  padding: 12px 20px;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* --- 6. Results Container --- */
 .results-container {
   width: 100%;
-  max-width: 1000px; /* Wide container for results */
-  margin-top: 30px;
+  max-width: 1200px;
+  margin-top: 40px;
   padding: 0 20px;
-  animation: fadeIn 1s ease forwards; /* Fade in results slowly */
-  opacity: 0;
+  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes fadeIn {
-  to { opacity: 1; }
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* 5. Source Sections (Google, Amazon, etc.) */
+/* --- 7. Source Titles --- */
 .source-section {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
 }
 
-.source-title {
-  font-size: 1.2rem;
-  color: #8ab4f8; /* Google-ish blue */
-  border-bottom: 1px solid #3c4043;
-  padding-bottom: 10px;
-  margin-bottom: 15px;
+.source-title, .amazon-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e8eaed;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* 6. Book Grid */
+/* Add a cool accent line next to the titles */
+.source-title::before, .amazon-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 24px;
+  background: #8ab4f8;
+  border-radius: 4px;
+}
+
+/* --- 8. Book Cards (Modern Look) --- */
+/* BookCard.jsx */
+/* --- 8. Book Cards (Premium Glassmorphism) --- */
 .book-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 20px;
+  /* Slightly wider minimum width so covers look proportioned */
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 25px;
+  padding-bottom: 40px; /* Breathing room at the bottom */
 }
 
-/* 7. Book Cards */
 .book-card {
-  background-color: #303134;
-  border-radius: 8px;
+  /* 🪟 The Glass Effect */
+  background: rgba(25, 25, 25, 0.5); /* Semi-transparent dark tint */
+  backdrop-filter: blur(12px);       /* Blurs the bookshelf behind the card */
+  -webkit-backdrop-filter: blur(12px); /* For Safari support */
+
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle glowing edge */
+  border-radius: 14px;
   overflow: hidden;
-  transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
+
+  /* Smooth animations */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 .book-card:hover {
-  transform: translateY(-5px); /* Lift effect on hover */
-  background-color: #3c4043;
+  transform: translateY(-8px); /* Lifts up off the screen */
+  background: rgba(40, 40, 40, 0.7); /* Slightly brighter on hover */
+  border-color: rgba(138, 180, 248, 0.4); /* Glows Google Blue */
+  box-shadow:
+          0 15px 30px rgba(0, 0, 0, 0.5),
+          0 0 15px rgba(138, 180, 248, 0.2); /* Soft blue aura */
 }
 
+/* 🖼️ The Cover Image */
 .book-cover {
   width: 100%;
-  height: 220px;
+  height: 260px;
   object-fit: cover;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.4s ease; /* Prepares the image for hover zoom */
 }
 
+/* Very subtle zoom on the image itself when hovering the card */
+.book-card:hover .book-cover {
+  transform: scale(1.03);
+}
+
+/* 📝 The Text Info Area */
 .book-info {
-  padding: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .book-title {
-  font-size: 0.9rem;
-  font-weight: bold;
-  margin: 0 0 5px 0;
-  white-space: nowrap;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+
+  /* Forces the title to perfectly truncate at 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis; /* ... if title is too long */
+  text-overflow: ellipsis;
 }
 
 .book-author {
-  font-size: 0.8rem;
-  color: #bdc1c6;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #a1a1aa; /* Soft silver color */
   margin: 0;
+
+  /* Forces author name to 1 line */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- 9. Loading States --- */
+.global-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 50px;
+  color: #8ab4f8;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(138, 180, 248, 0.2);
+  border-top-color: #8ab4f8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* --- Amazon Recommendations Section --- */
@@ -368,58 +653,79 @@ a:hover {
 }
 
 /* BookDetail.jsx */
+/* =========================================
+   BOOK DETAIL PAGE (Premium Glassmorphism)
+   ========================================= */
+
 .detail-container {
   min-height: 100vh;
   color: white;
-  padding: 40px;
+  padding: 60px 40px; /* More breathing room */
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  /* Smooth entrance animation */
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* 🔙 Glass Back Button */
 .back-btn {
   align-self: flex-start;
-  background-color: #f9f9f9;
-  color: black;
-  border: 1px solid #555;
-  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 24px;
   cursor: pointer;
-  border-radius: 20px;
+  border-radius: 30px; /* Pill shape */
   margin-bottom: 30px;
-  transition: all 0.2s;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
 .back-btn:hover {
-  background-color: #e8e4e4;
-  border-color: #777;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-5px); /* Nice slide-back effect */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* 🪟 The Main Glass Pane */
 .detail-content {
   display: flex;
   gap: 50px;
-  max-width: 1000px;
-  width: 100%;
-  background-color: #252627;
-  padding: 40px;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  width: 90%;
+
+  /* Frosted Glass Effect */
+  background: rgba(25, 25, 25, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  padding: 50px;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
 }
 
-/* Image Section */
+/* 🖼️ Image Section */
 .detail-image-section {
   flex: 1;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .detail-cover {
   width: 100%;
-  max-width: 300px;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  max-width: 320px;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6); /* Deep shadow so the book pops off the glass */
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Info Section */
+/* 📝 Info Section */
 .detail-info-section {
   flex: 2;
   display: flex;
@@ -428,103 +734,142 @@ a:hover {
 }
 
 .detail-title {
-  font-size: 2.5rem;
+  font-size: 3rem;
+  font-weight: 800;
   margin: 0 0 10px 0;
-  color: #fff;
+  /* Soft metallic text gradient */
+  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
 }
 
 .detail-author {
-  font-size: 1.2rem;
-  color: #8ab4f8; /* Google Blue */
-  margin-bottom: 20px;
+  font-size: 1.3rem;
+  color: #8ab4f8; /* Matches your Google Blue accent */
+  margin-bottom: 25px;
+  font-weight: 500;
 }
 
+/* 🏷️ Glass Metadata Tags */
 .detail-meta {
   display: flex;
   gap: 15px;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
 }
 
 .meta-tag {
-  background-color: #3c4043;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.9rem;
-  color: #bdc1c6;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #e8eaed;
+  font-weight: 500;
 }
 
+/* 📖 Description */
 .detail-description h3 {
-  border-bottom: 1px solid #555;
-  padding-bottom: 10px;
+  font-size: 1.4rem;
+  color: #ffffff;
   margin-bottom: 15px;
-  color: #e8eaed;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Accent line for description header */
+.detail-description h3::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  background: #8ab4f8;
+  border-radius: 4px;
 }
 
 .detail-description p {
-  line-height: 1.6;
-  color: #bdc1c6;
+  line-height: 1.7;
+  color: #d1d5db;
+  font-size: 1.05rem;
+  margin-bottom: 20px;
 }
 
+/* ➕ Admin Insert Button */
 .insert-btn {
-  background-color: #4caf50; /* Green */
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  padding: 12px 24px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
+  border-radius: 8px;
+  font-size: 1.05rem;
   font-weight: bold;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
 }
 
 .insert-btn:hover {
-  background-color: #43a047;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
 }
 
-/* --- Related Books Section --- */
+/* =========================================
+   RELATED BOOKS SECTION
+   ========================================= */
 
 .related-books-section {
-  margin-top: 4rem;              /* mt-16 */
-  padding-top: 2rem;             /* pt-8 */
-  border-top: 1px solid #374151; /* border-t border-gray-700 */
+  width: 100%;
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .related-books-title {
-  font-size: 1.5rem;             /* text-2xl */
-  line-height: 2rem;
-  font-weight: 700;              /* font-bold */
-  color: #ffffff;                /* text-white */
-  margin-bottom: 1.5rem;         /* mb-6 */
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
+.related-books-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 26px;
+  background: #8ab4f8;
+  border-radius: 4px;
+}
+
+/* 🔄 Skeleton Loading (Matches new glass book cards) */
 .related-books-loading {
-  display: flex;                 /* flex */
-  gap: 1rem;                     /* space-x-4 replacement */
-  overflow: hidden;              /* overflow-hidden */
+  display: flex;
+  gap: 25px;
+  overflow: hidden;
 }
 
 .related-books-structure {
-  min-width: 150px;              /* min-w-[150px] */
-  height: 15rem;                 /* h-60 */
-  background-color: #1f2937;     /* bg-gray-800 */
-  border-radius: 0.25rem;        /* rounded */
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; /* animate-pulse */
+  min-width: 180px;
+  height: 260px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  animation: pulseGlass 2s infinite ease-in-out;
+}
+
+@keyframes pulseGlass {
+  0%, 100% { background: rgba(255, 255, 255, 0.05); }
+  50% { background: rgba(255, 255, 255, 0.1); }
 }
 
 .related-books-empty {
-  color: #6b7280;                /* text-gray-500 */
-}
-
-/* Keyframes for the skeleton loading animation */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: .5;
-  }
+  color: #9ca3af;
+  font-size: 1.1rem;
 }
 
 
@@ -625,4 +970,127 @@ a:hover {
   background: #6096e1;
   color: white;
   border: none;
+}
+
+
+/* ImageGrid.jsx */
+.image-masonry-grid {
+  column-count: 3; /* 3 columns on desktop */
+  column-gap: 20px;
+  padding: 20px 0;
+  width: 100%;
+}
+
+/* Responsive columns */
+@media (max-width: 900px) { .image-masonry-grid { column-count: 2; } }
+@media (max-width: 600px) { .image-masonry-grid { column-count: 1; } }
+
+.image-masonry-card {
+  break-inside: avoid; /* Prevents images from splitting across columns */
+  margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background: rgba(25, 25, 25, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-masonry-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border-color: rgba(138, 180, 248, 0.3);
+}
+
+.masonry-img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.image-masonry-card:hover .masonry-img {
+  transform: scale(1.05); /* Slight zoom on hover */
+}
+
+/* The dark gradient overlay that appears on hover */
+.masonry-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+  padding: 20px 15px 15px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.image-masonry-card:hover .masonry-overlay {
+  opacity: 1;
+}
+
+.masonry-title {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.masonry-icon {
+  color: #8ab4f8;
+  font-weight: bold;
+}
+
+
+/* AdminDashboard.jsx */
+.admin-dashboard-container {
+  padding: 40px;
+  color: white;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-title {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 2.5rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.charts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.chart-card {
+  background: rgba(30, 30, 40, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.chart-card h2 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  color: #e2e8f0;
+}
+
+.chart-card p {
+  color: #94a3b8;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.chart-wrapper {
+  width: 100%;
 }

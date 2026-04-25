@@ -22,7 +22,7 @@ public class EmbeddingMigrationRunner implements ApplicationRunner {
     private final BookImportService bookImportService;
 
     // YOUR PERFECT CONFIGURATION
-    private static final boolean FORCE_RE_MIGRATION = true;
+    private static final boolean FORCE_RE_MIGRATION = false;
     private static final boolean RUN_CSV_IMPORT = false;
     private static final int BATCH_SIZE = 300;
 

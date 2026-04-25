@@ -26,7 +26,7 @@ public class Book implements SearchableItem {
     @Column(name = "author", columnDefinition = "text", nullable = false)
     private String author;
 
-    @Column(name = "description", columnDefinition = "text", nullable = false)
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @Column(name = "isbn", length = 20)
@@ -44,7 +44,8 @@ public class Book implements SearchableItem {
     @Column(name = "embedding", columnDefinition = "vector(384)")
     private float[] embedding;
 
-    private transient String source;
+    @Column(name = "source", length = 50)
+    private String source;
 
 
     public Book() {

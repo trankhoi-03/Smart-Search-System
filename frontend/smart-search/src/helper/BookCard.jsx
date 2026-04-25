@@ -13,7 +13,13 @@ function BookCard({ book, onClick }) {
             />
             <div className="book-info">
                 <h4 className="book-title" title={book.title}>{book.title}</h4>
-                <p className="book-author">{book.author}</p>
+                {book.author && book.author !== "N/A" ? (
+                    <p className="book-author">{book.author}</p>
+                ) : (
+                    <p className="book-author" style={{ fontStyle: 'italic', color: '#888' }}>
+                        Author details unavailable
+                    </p>
+                )}
             </div>
         </div>
     )

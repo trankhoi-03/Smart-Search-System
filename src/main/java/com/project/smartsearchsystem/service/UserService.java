@@ -11,4 +11,6 @@ public interface UserService {
     UserResponseDTO register(RegisterRequestDTO registerRequest);
 
     UserResponseDTO getCurrentUser(String username);
+
+    void logSearchHistory(String username, String query);
 }

@@ -5,9 +5,11 @@ import com.project.smartsearchsystem.dto.LoginResponseDTO;
 import com.project.smartsearchsystem.dto.RegisterRequestDTO;
 import com.project.smartsearchsystem.dto.UserResponseDTO;
 import com.project.smartsearchsystem.entity.Role;
+import com.project.smartsearchsystem.entity.SearchHistory;
 import com.project.smartsearchsystem.entity.User;
 import com.project.smartsearchsystem.exception.DuplicateResourceException;
 import com.project.smartsearchsystem.exception.ResourceNotFoundException;
+import com.project.smartsearchsystem.repository.SearchHistoryRepository;
 import com.project.smartsearchsystem.repository.UserRepository;
 import com.project.smartsearchsystem.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +21,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.concurrent.CompletableFuture;
+
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private SearchHistoryRepository historyRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -93,6 +100,23 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return convertToDTO(user);
+    }
+
+    @Override
+    public void logSearchHistory(String username, String query) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                User user = userRepository.findByUsername(username).orElse(null);
+
+                if (user != null) {
+                    SearchHistory history = new SearchHistory(user.getId(), query);
+                    historyRepository.save(history);
+                    System.out.println("Background Task: Saved '" + query + "' to history for user " + username);
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to save search history: " + e.getMessage());
+            }
+        });
     }
 
     private UserResponseDTO convertToDTO(User user) {

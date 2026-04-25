@@ -4,11 +4,15 @@ import com.project.smartsearchsystem.dto.*;
 import com.project.smartsearchsystem.entity.Book;
 import com.project.smartsearchsystem.security.JwtTokenProvider;
 import com.project.smartsearchsystem.service.BookService;
+import com.project.smartsearchsystem.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,10 +23,12 @@ public class BookController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final BookService localBookService;
+    private final UserService userService;
 
-    public BookController(JwtTokenProvider jwtTokenProvider, BookService localBookService) {
+    public BookController(JwtTokenProvider jwtTokenProvider, BookService localBookService, UserService userService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.localBookService = localBookService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -32,6 +38,11 @@ public class BookController {
 
     @GetMapping("/search")
     public BookSearchResponse search(@RequestParam String query, @RequestHeader("Authorization") String token) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            String currentUserName = auth.getName();
+            userService.logSearchHistory(currentUserName, query);
+        }
         return localBookService.searchFastSources(query);
     }
 
@@ -52,6 +63,30 @@ public class BookController {
         String message = request.get("message");
         ChatResponseDto response = localBookService.getAIRecommendation(message, userId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<Map<String, String>> getBookSummary(
+            @RequestParam String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String imageUrl) {
+
+        try {
+            // Hand off the business logic to the Service Layer
+            String aiResponse = localBookService.generateBookSummary(title, author, imageUrl);
+
+            // Package the result for React
+            Map<String, String> response = new HashMap<>();
+            response.put("summary", aiResponse);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace(); // Always good for debugging!
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "The AI librarian is currently reading. Please try again later.");
+            return ResponseEntity.status(500).body(errorResponse);
+        }
     }
 
     @GetMapping("/most-search")

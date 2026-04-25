@@ -3,14 +3,13 @@ package com.project.smartsearchsystem.service;
 import com.project.smartsearchsystem.dto.*;
 import com.project.smartsearchsystem.entity.Book;
 import com.project.smartsearchsystem.entity.SearchHistory;
-import com.project.smartsearchsystem.entity.User;
 import com.project.smartsearchsystem.repository.BookRepository;
 import com.project.smartsearchsystem.repository.SearchHistoryRepository;
-import com.project.smartsearchsystem.repository.UserRepository;
 import com.project.smartsearchsystem.utils.BookUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +27,6 @@ import static com.project.smartsearchsystem.utils.RecommendationUtils.distinctBy
 public class BookServiceImpl implements BookService {
 
     private final BookUtils bookUtils;
-    private final UserRepository userRepository;
     private final SearchHistoryRepository historyRepository;
     private final BookRepository bookRepository;
     private final GoogleBookServiceImpl googleBookService;
@@ -36,11 +34,14 @@ public class BookServiceImpl implements BookService {
     private final AmazonServiceImpl amazonService;
     private final EmbeddingService embeddingService;
     private final QueryService queryService;
+    private final VisionService visionService;
 
     @Autowired
-    public BookServiceImpl(BookUtils bookUtils, UserRepository userRepository, SearchHistoryRepository historyRepository, BookRepository bookRepository, GoogleBookServiceImpl googleBookService, OpenLibraryServiceImpl openLibraryService, AmazonServiceImpl amazonService, EmbeddingService embeddingService, QueryService queryService) {
+    private CacheManager cacheManager;
+
+    @Autowired
+    public BookServiceImpl(BookUtils bookUtils, SearchHistoryRepository historyRepository, BookRepository bookRepository, GoogleBookServiceImpl googleBookService, OpenLibraryServiceImpl openLibraryService, AmazonServiceImpl amazonService, EmbeddingService embeddingService, QueryService queryService, VisionService visionService) {
         this.bookUtils = bookUtils;
-        this.userRepository = userRepository;
         this.historyRepository = historyRepository;
         this.bookRepository = bookRepository;
         this.googleBookService = googleBookService;
@@ -48,6 +49,7 @@ public class BookServiceImpl implements BookService {
         this.amazonService = amazonService;
         this.embeddingService = embeddingService;
         this.queryService = queryService;
+        this.visionService = visionService;
     }
 
     @Override
@@ -57,41 +59,26 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public List<Book> fullTextSearch(String userInput) {
-        String normalizedUserInput = normalize(userInput);
-
-        // Check for exact match in the database
-        Book exactMatch = bookRepository.findBookByTitle(normalizedUserInput);
-        if (exactMatch != null) {
-            // Double-check the match with normalized comparison
-            String storedTitle = exactMatch.getTitle() != null ? normalize(exactMatch.getTitle()) : "";
-            if (storedTitle.equals(normalizedUserInput)) {
-                return Collections.singletonList(exactMatch);  // Return only the exact match
-            }
+        if (userInput == null || userInput.trim().isEmpty()) {
+            return Collections.emptyList();
         }
-
-        // If no exact match, perform full-text search
-        String query = userInput.trim().replaceAll("\\s+", "&");
-        return bookRepository.searchBooksByFullText(query);
+        return bookRepository.searchBooksByFullText(userInput.trim());
     }
 
     @Override
     public List<Book> searchLocalKeyword(String query) {
-        return sortAndFilter(fullTextSearch(query), normalize(query));
+        return fullTextSearch(query);
     }
 
     @Override
     public List<Book> searchLocalSemantic(String query, float[] queryVector) {
-        if (query == null || query.trim().isEmpty()) {
-            return List.of();
-        }
-
-        if (queryVector == null) {
+        if (query == null || query.trim().isEmpty() || queryVector == null) {
             return List.of();
         }
 
         queryVector = normalizeVector(queryVector);
 
-        // 2. Build the vector string "[val1,val2,...]"
+        // Build the vector string
         float[] finalUserQueryVector = queryVector;
         String vectorString = "[" +
                 IntStream.range(0, queryVector.length)
@@ -99,36 +86,23 @@ public class BookServiceImpl implements BookService {
                         .collect(Collectors.joining(",")) +
                 "]";
 
-        // Debug: log the string
-        System.out.println("Full query vector string: " + vectorString);
-        System.out.println("Vector length: " + queryVector.length);
-
-        // 3. Run the vector query (pass vectorString, NOT plain query!)
+        // 1. Run the vector query
         List<Object[]> raw = bookRepository.findSemanticMatches(vectorString);
 
-        // 4. Log raw results (
-        System.out.println("=== RAW TOP BEFORE FILTERING ===");
+        // 2. Extract IDs and distances (Filtering out weak AI matches early)
+        List<Integer> validIds = new ArrayList<>();
+        double threshold = 0.55;
+
         for (Object[] row : raw) {
-            Integer id = Math.toIntExact(((Number) row[0]).longValue());
-            Book book = bookRepository.findById(id).orElse(null);
-            if (book != null) {
-                Double distance = (Double) row[row.length - 1];
-                System.out.println(" - " + book.getTitle() + " → distance = " + distance);
+            Double distance = (Double) row[row.length - 1];
+            if (distance <= threshold) {
+                Integer id = Math.toIntExact(((Number) row[0]).longValue());
+                validIds.add(id);
             }
         }
-
-        // 5. Normalize query for keyword boost
-        String normalizedQuery = normalize(query.toLowerCase());
-
-        // 6. Apply semantic filter/sort
-        List<Book> filtered = bookUtils.sortAndFilterSemantic(raw, normalizedQuery);
-
-        System.out.println("=== AFTER sortAndFilterSemantic() ===");
-        for (Book b : filtered) {
-            System.out.println(" - Title: " + b.getTitle() + " | Author: " + b.getAuthor());
-        }
-
-        return filtered;
+        // 3. Fetch ALL books in ONE fast database call!
+        if (validIds.isEmpty()) return List.of();
+        return bookRepository.findAllById(validIds);
     }
 
     @Override
@@ -137,26 +111,21 @@ public class BookServiceImpl implements BookService {
             return new ExternalSearchResults(List.of(), List.of());
         }
 
-
         System.out.println(">>> Sending to APIs: '" + query + "'");
-        // Helper function to create a safe, timed-out future
-        // This defines: "Run this task, but if it takes > 5s, give me an empty list."
         CompletableFuture<List<GoogleBookDto>> google = CompletableFuture.supplyAsync(() -> {
                     return googleBookService.searchGoogleBooks(query);
                 }).orTimeout(5, TimeUnit.SECONDS)
                 .exceptionally(ex -> {
-                    System.err.println("❌ Google Search failed: " + ex.getMessage());
+                    System.err.println("Google Search failed: " + ex.getMessage());
                     return Collections.emptyList();
                 });
 
         CompletableFuture<List<OpenLibraryBookDto>> openLibrary = CompletableFuture.supplyAsync(() -> {
                     return openLibraryService.searchOpenLibraryBooks(query);
                 })
-                // ⬆️ INCREASE TIMEOUT: Large JSON payloads take Java longer to parse than browsers
                 .orTimeout(15, TimeUnit.SECONDS)
                 .exceptionally(ex -> {
-                    // 🛑 THE FIX: Stop swallowing the exception, so you can see why it fails
-                    System.err.println("❌ Open Library failed: " + ex.getMessage());
+                    System.err.println("Open Library failed: " + ex.getMessage());
                     ex.printStackTrace();
                     return Collections.emptyList();
                 });
@@ -171,89 +140,100 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Cacheable(value = "searchResults", key = "#query")
     public BookSearchResponse searchFastSources(String query) {
-        // 1. Capture User
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            String currentUsername = auth.getName();
-
-            CompletableFuture.runAsync(() -> {
-                try {
-                    User user = userRepository.findByUsername(currentUsername).orElse(null);
-
-                    if (user != null) {
-                        SearchHistory history = new SearchHistory(user.getId(), query);
-                        historyRepository.save(history);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Failed to save search history: " + e.getMessage());
-                }
-            });
-        }
-
         String normalizedQuery = normalize(query);
         String apiQuery = queryService.enhanceQuery(query);
 
+        // 1. Generate Vectors & Search
+        float[] queryVector = embeddingService.createEmbedding(apiQuery);
 
+        // 2. Semantic Search
+        List<Book> localSemantic = searchLocalSemantic(apiQuery, queryVector);
+
+        // 3. Keyword Search
         List<Book> localKeyword = searchLocalKeyword(normalizedQuery);
 
-        // Check for Exact Match
-        List<Book> exactMatches = localKeyword.stream()
-                .filter(b -> b.getTitle().equalsIgnoreCase(query))
-                .toList();
+        Map<Integer, Book> uniqueBooksMap = new HashMap<>();
+        for (Book book : localKeyword) uniqueBooksMap.put(book.getId(), book);
+        for (Book book : localSemantic) uniqueBooksMap.put(book.getId(), book);
 
-        if (!exactMatches.isEmpty()) {
-            System.out.println("⚡ Exact match found! Skipping external search.");
-            return new BookSearchResponse(exactMatches);
+        // Re-Rank the unified list using Hybrid Scoring (Vector + Keyword Boost)
+        List<Book> finalLocalList = reRankLocal(new ArrayList<>(uniqueBooksMap.values()), queryVector, query, apiQuery);
+
+        boolean hasStrongLocalMatch = false;
+
+        if (!finalLocalList.isEmpty()) {
+            Book topBook = finalLocalList.getFirst();
+
+            double vectorScore = topBook.getEmbedding() == null ? 0.0 : cosineSimilarity(queryVector, topBook.getEmbedding());
+            double keywordScore = scoreBooks(apiQuery, query, topBook.getTitle(), topBook.getAuthor());
+
+            double normalizedKeywordScore = Math.min(Math.max(keywordScore / 15000.0, 0.0), 1.0);
+
+            double alpha = 0.70;
+            double topScore = (alpha * normalizedKeywordScore) + ((1 - alpha) * vectorScore);
+
+            System.out.println("Top Local Book Score: " + topScore + " (" + topBook.getTitle() + ") ");
+
+            if (topScore >= 0.85) {
+                hasStrongLocalMatch = true;
+            }
+        }
+        if (hasStrongLocalMatch && finalLocalList.size() >= 10) {
+            System.out.println("Local match perfect! Skipping external APIs");
+            return new BookSearchResponse(finalLocalList);
         }
 
-        // 1. Start External Search IMMEDIATELY
-        // Reduce Amazon timeout inside this method to 5 or 6 seconds maximum.
+        System.out.println("Local database missing true match. Firing external APIs...");
+
+        if (!hasStrongLocalMatch) {
+            System.out.println("Clearing weak local results to prevent user confusion.");
+            finalLocalList.clear();
+        }
+
         CompletableFuture<ExternalSearchResults> externalFetchFuture = CompletableFuture.supplyAsync(() -> {
-            // A. Clean Query
             return searchGoogleAndOpenLib(apiQuery);
         });
 
-        // 2. Start Query Embedding in Parallel
-        CompletableFuture<float[]> queryVectorFuture = CompletableFuture.supplyAsync(() ->
-                embeddingService.createEmbedding(apiQuery)
-        );
-
-
-        // 4. Local Semantic (Depends on Query Vector)
-        CompletableFuture<List<Book>> localSemanticFuture = queryVectorFuture.thenApplyAsync(vector ->
-                searchLocalSemantic(normalizedQuery, vector)
-        );
-
-        // 5. External Re-ranking (The Complex Chain)
-        // We need BOTH the Search Results AND the Query Vector to proceed.
         CompletableFuture<ExternalSearchResults> reRankedExternalFuture = externalFetchFuture
-                .thenCombineAsync(queryVectorFuture, (rawResults, queryVector) -> bookUtils.rankExternalResultsParallel(rawResults, queryVector, apiQuery));
+                .thenApplyAsync(rawResults -> bookUtils.rankExternalResultsParallel(rawResults, queryVector, query, apiQuery));
 
-        // 6. Join All
-        // We only wait for the SLOWEST task here.
-        ExternalSearchResults keywordResults = externalFetchFuture.join();
-        ExternalSearchResults semanticResults = reRankedExternalFuture.join();
-        List<Book> localSemantic = localSemanticFuture.join();
+        // Wait for the re-ranking to finish
+        ExternalSearchResults finalExternalResults = reRankedExternalFuture.join();
 
+        CompletableFuture.runAsync(() -> {
+            List<ExternalBookSource> combinedSources = new ArrayList<>();
+            if (finalExternalResults.google() != null) {
+                combinedSources.addAll(finalExternalResults.google());
+            }
+            if (finalExternalResults.openLibrary() != null) {
+                combinedSources.addAll(finalExternalResults.openLibrary());
+            }
+            saveExternalBookToDatabase(combinedSources);
+
+            Cache searchCache = cacheManager.getCache("searchResults");
+            if (searchCache != null) {
+                searchCache.evict(query);
+                System.out.println("Cache cleared for '" + query + "' because new books were saved locally");
+            }
+        });
+
+        // 4. Return the Unified List
         return new BookSearchResponse(
-                localKeyword,
-                localSemantic,
-                keywordResults.google(),
-                keywordResults.openLibrary(),
-                semanticResults.google(),
-                semanticResults.openLibrary()
+                finalLocalList, // <--- The single, sorted, smart list
+                finalExternalResults.google(),
+                finalExternalResults.openLibrary()
         );
     }
 
     @Override
     public List<AmazonBookDto> searchAmazon(String query) {
-        String normalizedQuery = normalize(query);
         return amazonService.searchAmazonBooks(query);
     }
 
     @Override
+    @Cacheable(value = "amazonResults", key = "#query")
     public List<AmazonBookDto> searchAmazonOnly(String query) {
         String apiQuery = queryService.enhanceQuery(query);
         List<AmazonBookDto> rawAmazon = searchAmazon(apiQuery);
@@ -262,10 +242,25 @@ public class BookServiceImpl implements BookService {
             List<AmazonBookDto> candidates = rawAmazon.stream().limit(30).toList();
             bookUtils.populateEmbeddingsAsync(candidates).join();
             float[] queryVector = embeddingService.createEmbedding(apiQuery);
-            return reRankExternal(candidates, queryVector, apiQuery).stream()
+            List<AmazonBookDto> finalRankedAmazonList = reRankExternal(candidates, queryVector, query, apiQuery).stream()
                     .filter(distinctByKey(b -> b.getTitle().toLowerCase().trim()))
                     .limit(10)
                     .toList();
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    saveExternalBookToDatabase(new ArrayList<>(finalRankedAmazonList));
+
+                    Cache amazonCache = cacheManager.getCache("amazonResults");
+                    if (amazonCache != null) {
+                        amazonCache.evict(query);
+                        System.out.println("Amazon cache cleared for '" + query + "'");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to save Amazon books to DB: " + e.getMessage());
+                }
+            });
+            return finalRankedAmazonList;
         }
 
         return rawAmazon;
@@ -326,8 +321,7 @@ public class BookServiceImpl implements BookService {
         }
 
 
-        // 3. CHECK DUPLICATES (Logic Changed: Title + Author Only) 🔍
-        // We strictly ignore ISBN for lookup now, as requested.
+        // 3. CHECK DUPLICATES (Logic Changed: Title + Author Only)
         Optional<Book> existingBook = Optional.empty();
 
         if (newBook.getAuthor() != null) {
@@ -337,9 +331,6 @@ public class BookServiceImpl implements BookService {
                     newBook.getAuthor()
             );
         }
-        // Fallback: If author is missing, maybe check just title?
-        // (Optional, but risky if multiple books have same title.
-        //  For now, let's assume Author is usually present).
 
         // 4. SAVE OR UPDATE
         if (existingBook.isPresent()) {
@@ -375,12 +366,46 @@ public class BookServiceImpl implements BookService {
             if (newBook.getDescription() == null) {
                 newBook.setDescription("No description available.");
             }
-            // Ensure ISBN is saved as "N/A" if missing, not null (if your DB requires it)
+            // Ensure ISBN is saved as "N/A" if missing, not null
             if (newBook.getIsbn() == null) {
                 newBook.setIsbn("N/A");
             }
 
             return bookRepository.save(newBook);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void saveExternalBookToDatabase(List<ExternalBookSource> sources) {
+        if (sources == null || sources.isEmpty()) {
+            return;
+        }
+
+        System.out.println("Starting Data Hydration: Saving external results in DB");
+        List<Book> booksToSave = new ArrayList<>();
+
+        for (ExternalBookSource externalBook : sources) {
+            String title = externalBook.getTitle();
+            String author = externalBook.getAuthor();
+
+            Optional<Book> existingBook = bookRepository.findBookByTitleAndAuthor(title, author);
+
+            if (existingBook.isEmpty()) {
+                Book newBook = convertToBook(externalBook);
+
+                if (externalBook instanceof SearchableItem) {
+                    newBook.setEmbedding(((SearchableItem) externalBook).getEmbedding());
+                }
+                booksToSave.add(newBook);
+            }
+        }
+        if (!booksToSave.isEmpty()) {
+            bookRepository.saveAll(booksToSave);
+            System.out.println("Data Hydration Complete: Saved " + booksToSave.size() + " new books to database.");
+        }
+        else {
+            System.out.println("Data Hydration Skipped: No new unique books found");
         }
     }
 
@@ -449,5 +474,45 @@ public class BookServiceImpl implements BookService {
                 .limit(limit)
                 .map(result -> (String) result[0])
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = "bookSummaries", key = "#title + '-' + #author")
+    public String generateBookSummary(String title, String author, String imageUrl) {
+
+        System.out.println("CACHE MISS: Asking Gemini to write a summary for " + title);
+        String finalAuthor = author;
+
+        boolean isAuthorMissing = (author == null || author.trim().isEmpty() || author.equals("N/A") || author.equals("Unknown Author"));
+
+        if (isAuthorMissing && imageUrl != null && !imageUrl.isEmpty()) {
+            try {
+                System.out.println("Author is missing. Asking Gemini Vision to read the book cover");
+
+                String extractedCoverText = visionService.extractTextFromImageUrl(imageUrl);
+
+                finalAuthor = "an unknown author. However, the book cover contains this text: " + extractedCoverText;
+            } catch (Exception e) {
+                System.err.println("Vision extraction failed, falling back to basic prompt.");
+                finalAuthor = "an unknown author";
+            }
+        }
+        else if (isAuthorMissing) {
+            finalAuthor = "an unknown author";
+        }
+
+        String prompt = String.format(
+                "Act as an expert librarian. I am looking at the book '%s' by %s. " +
+                        "Please provide a quick, engaging TL;DR summary of this book. " +
+                        "Format your response exactly like this:\n\n" +
+                        "**The TL;DR:**\n(Write a 2-sentence maximum summary here)\n\n" +
+                        "**3 Key Concepts:**\n" +
+                        "- (Concept 1)\n" +
+                        "- (Concept 2)\n" +
+                        "- (Concept 3)",
+                title, finalAuthor
+        );
+
+        return queryService.generateText(prompt);
     }
 }

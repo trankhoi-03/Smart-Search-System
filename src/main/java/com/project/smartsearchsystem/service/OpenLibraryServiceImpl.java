@@ -9,11 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.project.smartsearchsystem.utils.BookUtils.sanitizeForOpenLibrary;
 
 @Service
 @Transactional
@@ -27,12 +31,14 @@ public class OpenLibraryServiceImpl implements OpenLibraryService {
         List<String> workKeys = new ArrayList<>();
 
         try {
-            String modifiedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
+            String sanitizedQuery = sanitizeForOpenLibrary(query);
+            String modifiedQuery = URLEncoder.encode(sanitizedQuery, StandardCharsets.UTF_8);
             String requestUrl = OPEN_LIBRARY_API + modifiedQuery + "&limit=20&fields=*";
+            URI uri = URI.create(requestUrl);
 
             System.out.println("🔗 [OPEN LIBRARY] REQUEST URL: " + requestUrl);
 
-            ResponseEntity<String> response = restTemplate.getForEntity(requestUrl, String.class);
+            ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
             System.out.println("📡 [OPEN LIBRARY] HTTP status: " + response.getStatusCode());
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
@@ -137,9 +143,10 @@ public class OpenLibraryServiceImpl implements OpenLibraryService {
                     .collect(Collectors.toMap(
                             OpenLibraryBookDto::getTitle,
                             dto -> dto,
-                            (existing, replacement) -> existing.getEditionCount() > replacement.getEditionCount() ? existing : replacement
+                            (existing, replacement) -> existing.getEditionCount() > replacement.getEditionCount() ? existing : replacement,
+                            LinkedHashMap::new
                     ))
-                    .values().stream().toList());
+                    .values());
 
         } catch (Exception e) {
             System.err.println("❌ Open Library search failed completely: " + e.getMessage());

@@ -15,8 +15,6 @@ import org.springframework.web.client.RestTemplate;
 public class QueryService {
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // Put your Gemini API key in your application.properties or application.yml
-    // e.g., gemini.api.key=AIzaSyYourKeyHere...
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
@@ -29,25 +27,29 @@ public class QueryService {
         }
 
         // Very short queries → fast path (no LLM cost)
-        if (query.split("\\s+").length <= 2) {
-            System.out.println("⚡ Very short query. Using regex cleaner.");
+        if (query.split("\\s+").length <= 1) {
+            System.out.println("Very short query. Using regex cleaner.");
             return cleanQueryForAPI(query);
         }
 
-        String promptText = """
-        You are an expert search query optimizer for a book search engine.
-        
-        Analyze the user query and return ONLY the best possible search string:
-        
-        - If the user is looking for a SPECIFIC book (mentions ordinal like 1st/2nd/3rd, part, volume, book number, sequel, prequel, installment, final book, or any series reference), return the OFFICIAL full English title only.
-        - If the user is looking for a general topic, genre, or category (e.g. "books about java", "python programming", "best sci-fi novels 2025"), return a clean, concise keyword phrase optimized for APIs (remove filler words like "books about", "find me", "show me", "recommend", etc.).
-        
-        Rules:
-        - Output ONLY the final search string. Nothing else.
-        - No quotes, no markdown, no explanations, no extra words.
-        - Use proper capitalization for titles.
-        
-        User query: """ + query;
+        String promptText = "You are an expert search query optimizer for a book database. " +
+                "Your goal is to output ONLY the best search string, with no additional text or explanation. " +
+                "CRITICAL RULES:\n" +
+                "1. EXACT TITLES: If the user's query looks like a specific book title or author name, DO NOT CHANGE IT.\n" +
+                "2. CONVERSATIONAL QUERIES: Extract and rewrite natural language questions into core search keywords.\n" +
+                "3. SLANG & TYPOS: Fix typos, expand acronyms, and convert developer slang to official language names.\n" +
+                "4. PRUNING: Remove author names, leaving only the book title. DO NOT remove context nouns like 'programming' or 'framework'.\n\n" +
+                "Examples:\n" +
+                "Input: what is the second book of harry potter\n" +
+                "Output: Harry Potter and the Chamber of Secrets\n" +
+                "Input: the coffee bean language\n" +
+                "Output: Java\n" +
+                "Input: spring boot craig walls\n" +
+                "Output: Spring Boot\n" +
+                "Input: .net programming\n" +
+                "Output: .NET Programming\n" +
+                "Input: " + query + "\n" +
+                "Output:";
 
         try {
             // Build request
@@ -83,18 +85,18 @@ public class QueryService {
                                     .trim();
 
                             if (enhanced.length() < 3) {
-                                System.out.println("⚠️ LLM returned empty/useless output → fallback");
+                                System.out.println("LLM returned empty/useless output → fallback");
                                 return cleanQueryForAPI(query);
                             }
 
-                            System.out.println("🤖 LLM Smart Rewrite: '" + rawQuery + "' → '" + enhanced + "'");
+                            System.out.println("LLM Smart Rewrite: '" + rawQuery + "' → '" + enhanced + "'");
                             return enhanced;
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            System.err.println("⚠️ LLM enhancement failed: " + e.getMessage());
+            System.err.println("LLM enhancement failed: " + e.getMessage());
             // e.printStackTrace(); // uncomment only when debugging
         }
 
@@ -136,6 +138,41 @@ public class QueryService {
         return "Sorry, I'm having a brain freeze right now. Can you try rephrasing";
     }
 
+    public String generateText(String prompt) {
+        try {
+            JSONObject part = new JSONObject().put("text", prompt);
+            JSONObject content = new JSONObject().put("parts", new JSONArray().put(part));
+            JSONObject requestBody = new JSONObject().put("contents", new JSONArray().put(content));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    GEMINI_URL + geminiApiKey,
+                    entity,
+                    String.class
+            );
+
+            if (response.getBody() != null) {
+                JSONObject json = new JSONObject(response.getBody());
+                JSONArray candidates = json.optJSONArray("candidates");
+                if (candidates != null && !candidates.isEmpty()) {
+                    return candidates.getJSONObject(0)
+                            .optJSONObject("content")
+                            .optJSONArray("parts")
+                            .getJSONObject(0)
+                            .optString("text", "Summary not available.");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Gemini text generation failed: "  + e.getMessage());
+            // Throw an exception so the BookController's catch block can return a proper 500 error!
+            throw new RuntimeException("Failed to reach Gemini AI");
+        }
+        throw new RuntimeException("Empty response from Gemini AI");
+    }
+
     public String cleanQueryForAPI(String query) {
         if (query == null) return "";
 
@@ -144,7 +181,7 @@ public class QueryService {
                 .replaceAll("\\b(book|books|about|find|looking|for|search|show|me)\\b", "")
                 // 2. Remove relational/ordinal words
                 .replaceAll("\\b(first|second|third|last|sequel|prequel|part|volume|edition|series)\\b", "")
-                // 3. 🔴 NEW: Remove filler "stop words"
+                // 3. NEW: Remove filler "stop words"
                 .replaceAll("\\b(written by|author|like|similar to|of|the|a|an|in|on|with)\\b", "")
                 .trim()
                 .replaceAll("\\s+", " ");
